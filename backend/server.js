@@ -10,8 +10,12 @@ const app = express();
 
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+    origin: [
+        "https://rototask.onrender.com",
+        "http://localhost:5173"
+    ]
+}));app.use(express.json());
 
 
 // Check environment variables
