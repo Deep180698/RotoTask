@@ -1,0 +1,25 @@
+.container {
+
+    width: 100vw;
+
+    min-height: 100vh;
+
+    background-color: black;
+
+    padding: 40px;
+
+}
+
+body {
+    display: flex;
+    flex-direction: row;
+}
+
+.title {
+    color: white;
+    font-size: xx-large;
+}
+
+.buttonStyle {
+    margin-top: 10px;
+}
