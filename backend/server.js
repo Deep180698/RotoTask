@@ -1,227 +1,157 @@
-require("dotenv").config({
-    path: "./.env"
-});
-
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 
 const app = express();
 
+const PORT = 5000;
 
-// Middleware
-app.use(cors({
-    origin: [
-        "https://rototask.onrender.com",
-        "http://localhost:5173"
-    ]
-}));app.use(express.json());
+// Allow React to connect
+app.use(cors());
 
+app.use(express.json());
 
-// Check environment variables
-console.log("========== ENV CHECK ==========");
-console.log("EMAIL:", process.env.EMAIL);
-console.log("RECEIVER:", process.env.RECEIVER);
-console.log("PASSWORD LENGTH:", process.env.PASSWORD?.length);
-console.log("==============================");
+// Store orders temporarily
+let notifications = [];
 
-
-
-// Gmail transporter
-const transporter = nodemailer.createTransport({
-
-    host: "smtp.gmail.com",
-
-    port: 465,
-
-    secure: true,
-
-    auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASSWORD
-    }
-
-});
-
-
-
-// Verify Gmail connection
-
-transporter.verify((error, success) => {
-
-    if (error) {
-
-        console.log("❌ Gmail Connection Failed");
-        console.log(error);
-
-    } else {
-
-        console.log("✅ Gmail SMTP Connected Successfully");
-
-    }
-
-});
-
-
-
-
-// Test route
+// ========================================
+// TEST SERVER
+// ========================================
 
 app.get("/", (req, res) => {
-
     res.send("RotoTask Backend Running");
-
 });
 
+// ========================================
+// SEND ORDER TO INSPECTOR
+// ========================================
 
+app.post("/send-notification", (req, res) => {
 
-
-// Send email API
-
-app.post("/send-email", async (req, res) => {
-console.log("🔥 SEND EMAIL API CALLED");
-
-    console.log("\n========== NEW ORDER ==========");
-
-    console.log("Request Body:");
-    console.log(req.body);
-
-
+    console.log("");
+    console.log("================================");
+    console.log("🔥 NEW ORDER");
+    console.log("================================");
 
     const { order } = req.body;
 
-
-
-    if (!order) {
-
-        console.log("❌ Order number missing");
-
+    if (!order || !order.trim()) {
 
         return res.status(400).json({
+            success: false,
+            message: "Order number required"
+        });
+
+    }
+
+    const notification = {
+
+        id: Date.now(),
+
+        order: order.trim(),
+
+        message: "Order is ready to check",
+
+        status: "READY",
+
+        createdAt: new Date()
+
+    };
+
+    notifications.push(notification);
+
+    console.log("📦 Order:", notification.order);
+
+    console.log("🔔 Notification created");
+
+    console.log("================================");
+    console.log("");
+
+    res.json({
+
+        success: true,
+
+        message: "Order sent to inspector",
+
+        notification: notification
+
+    });
+
+});
+
+// ========================================
+// GET ORDERS
+// ========================================
+
+app.get("/notifications", (req, res) => {
+
+    res.json(notifications);
+
+});
+
+// ========================================
+// CHECK ORDER
+// ========================================
+
+app.delete("/notifications/:id", (req, res) => {
+
+    const id = Number(req.params.id);
+
+    const notificationExists =
+        notifications.some(
+            notification => notification.id === id
+        );
+
+    if (!notificationExists) {
+
+        return res.status(404).json({
 
             success: false,
 
-            message: "Order number required"
+            message: "Notification not found"
 
         });
 
     }
 
+    notifications = notifications.filter(
 
+        notification =>
+            notification.id !== id
 
-    console.log("Order Number:", order);
+    );
 
-    console.log("Sending email from:", process.env.EMAIL);
+    console.log(
+        "✅ Order checked. ID:",
+        id
+    );
 
-    console.log("Sending email to:", process.env.RECEIVER);
+    res.json({
 
+        success: true,
 
+        message: "Order checked"
 
-    try {
+    });
 
+});
 
-        const info = await transporter.sendMail({
+// ========================================
+// START SERVER
+// ========================================
 
-            from: process.env.EMAIL,
+app.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
 
-            to: process.env.RECEIVER,
-
-            subject: "RotoTask - Order Ready To Check",
-
-
-            html: `
-
-                <div style="font-family:Arial">
-
-                    <h2>📦 RotoTask Notification</h2>
-
-                    <p>Hello,</p>
-
-                    <p>The following order is ready to check:</p>
-
-
-                    <h1>${order}</h1>
-
-
-                    <p>
-                    Please verify the order.
-                    </p>
-
-
-                    <br>
-
-                    <p>
-                    RotoTask System
-                    </p>
-
-                </div>
-
-            `
-
-        });
-
-
-
-        console.log("✅ Email Sent Successfully");
-
-        console.log("Message ID:", info.messageId);
-
-        console.log("Response:", info.response);
-
-
-        console.log("==============================\n");
-
-
-
-        res.json({
-
-            success:true,
-
-            message:"Email sent successfully",
-
-            messageId:info.messageId
-
-        });
-
-
-
-    } catch(error) {
-
-
-        console.log("❌ EMAIL SEND ERROR");
-
-        console.log(error);
-
-
-        console.log("==============================\n");
-
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
+        console.log("");
+        console.log("================================");
+        console.log("🚀 RotoTask Backend Running");
+        console.log("================================");
+        console.log(`Port: ${PORT}`);
+        console.log("Network access enabled");
+        console.log("================================");
+        console.log("");
 
     }
-
-
-});
-
-
-
-
-
-// Start server
-
-app.listen(5000, () => {
-
-    console.log("");
-    console.log("🚀 RotoTask Backend Running");
-    console.log("PORT: 5000");
-    console.log("");
-
-});
+);

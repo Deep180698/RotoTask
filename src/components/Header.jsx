@@ -6,10 +6,8 @@ function Header() {
             RotoTask
         </h1>
 
-
     );
 
 }
-
 
 export default Header;

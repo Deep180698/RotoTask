@@ -1,15 +1,17 @@
-function StatusMessage({message}){
+function StatusMessage({ message }) {
 
+    if (!message) {
+        return null;
+    }
 
     return (
 
-        <p>
+        <p className="statusMessage">
             {message}
         </p>
 
     );
 
 }
-
 
 export default StatusMessage;

@@ -1,24 +1,39 @@
 function BarcodeScanner({
     barcode,
-    setBarcode
-}){
-
+    setBarcode,
+    onKeyDown
+}) {
 
     return (
 
-        <input
+        <div className="scannerContainer">
 
-            value={barcode}
+            <input
 
-            onChange={(e)=>setBarcode(e.target.value)}
+                className="barcodeInput"
 
-            placeholder="Scan barcode"
+                type="text"
 
-        />
+                value={barcode}
+
+                onChange={(e) =>
+                    setBarcode(
+                        e.target.value
+                    )
+                }
+
+                onKeyDown={onKeyDown}
+
+                placeholder="Scan barcode"
+
+                autoFocus
+
+            />
+
+        </div>
 
     );
 
 }
-
 
 export default BarcodeScanner;

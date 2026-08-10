@@ -1,77 +1,32 @@
-import { useState } from "react";
-import Header from "./components/Header";
-import BarcodeScanner from "./components/BarcodeScanner";
-import StatusMessage from "./components/StatusMessage";
-import { sendOrderEmail } from "./services/api";
+import Warehouse from "./Warehouse";
+import Inspector from "./Inspector";
+
 import "./App.css";
 
 
 function App() {
 
-  const [barcode, setBarcode] = useState("");
-  const [message, setMessage] = useState("");
+    const path =
+        window.location.pathname;
 
 
-  const handleSendOrder = async () => {
+    // ========================================
+    // INSPECTOR PAGE
+    // ========================================
 
-    if (!barcode) {
+    if (path === "/inspector") {
 
-      setMessage("Please scan barcode first");
-      return;
-
-    }
-
-
-    try {
-
-      setMessage("Sending email...");
-
-
-      const result = await sendOrderEmail(barcode);
-
-
-      console.log(result);
-
-
-      setMessage(
-        `✅ Order ${barcode} sent successfully`
-      );
-
-
-    } catch (error) {
-
-      console.log(error);
-
-      setMessage(
-        "❌ Failed to send email"
-      );
+        return <Inspector />;
 
     }
 
-  };
 
+    // ========================================
+    // WAREHOUSE PAGE
+    // ========================================
 
-  return (
-
-    <div className="container">
-
-      <div className="body">
-        <Header />
-        <BarcodeScanner
-          barcode={barcode}
-          setBarcode={setBarcode}
-        />
-      </div>
-      <button className="buttonStyle" onClick={handleSendOrder}>
-        Send Order
-      </button>
-      <StatusMessage message={message} />
-
-    </div>
-
-  );
+    return <Warehouse />;
 
 }
-
 
 export default App;
