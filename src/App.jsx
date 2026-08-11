@@ -3,30 +3,21 @@ import Inspector from "./Inspector";
 
 import "./App.css";
 
-
 function App() {
 
-    const path =
-        window.location.pathname;
+    const params = new URLSearchParams(
+        window.location.search
+    );
 
+    const screen = params.get("screen");
 
-    // ========================================
-    // INSPECTOR PAGE
-    // ========================================
+    console.log("RotoTask screen:", screen);
 
-    if (path === "/inspector") {
-
+    if (screen === "inspector") {
         return <Inspector />;
-
     }
 
-
-    // ========================================
-    // WAREHOUSE PAGE
-    // ========================================
-
     return <Warehouse />;
-
 }
 
 export default App;
