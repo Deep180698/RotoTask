@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -17,52 +18,126 @@ function Inspector() {
     const [showNotification, setShowNotification] =
         useState(false);
 
-    const [newOrder, setNewOrder] = useState(null);
+    const [newOrder, setNewOrder] =
+        useState(null);
 
-    const previousOrderIds = useRef(new Set());
+    const previousOrderIds =
+        useRef(new Set());
 
-    const firstLoad = useRef(true);
+    const firstLoad =
+        useRef(true);
 
-    const audioContext = useRef(null);
+    const audioContext =
+        useRef(null);
 
 
     // ========================================
     // REQUEST BROWSER NOTIFICATION PERMISSION
+    // WHEN INSPECTOR SCREEN LOADS
     // ========================================
 
     useEffect(() => {
 
-        if ("Notification" in window) {
+        const enableNotifications = async () => {
 
-            if (Notification.permission === "default") {
+            // Check browser support
+            if (!("Notification" in window)) {
 
-                Notification.requestPermission()
-                    .then(permission => {
+                console.log(
+                    "❌ This browser does not support notifications."
+                );
 
-                        console.log(
-                            "Notification permission:",
-                            permission
-                        );
+                return;
+            }
 
-                    })
-                    .catch(error => {
 
-                        console.log(
-                            "Notification permission error:",
-                            error
-                        );
+            console.log(
+                "Current notification permission:",
+                Notification.permission
+            );
 
-                    });
+
+            // Already allowed
+            if (
+                Notification.permission === "granted"
+            ) {
+
+                console.log(
+                    "✅ Browser notifications already enabled."
+                );
+
+                return;
+            }
+
+
+            // Previously blocked
+            if (
+                Notification.permission === "denied"
+            ) {
+
+                console.log(
+                    "❌ Browser notifications are blocked."
+                );
+
+                return;
+            }
+
+
+            // Ask for permission
+            try {
+
+                const permission =
+                    await Notification.requestPermission();
+
+
+                console.log(
+                    "Notification permission:",
+                    permission
+                );
+
+
+                if (
+                    permission === "granted"
+                ) {
+
+                    console.log(
+                        "✅ Browser notifications enabled!"
+                    );
+
+
+                    // Test notification
+                    new Notification(
+                        "🔔 RotoTask Inspector",
+                        {
+                            body:
+                                "Notifications are now enabled. You will be notified when a new order arrives.",
+
+                            tag:
+                                "rototask-notification-enabled"
+                        }
+                    );
+
+                } else {
+
+                    console.log(
+                        "⚠️ Notification permission was not granted."
+                    );
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Notification permission error:",
+                    error
+                );
 
             }
 
-        } else {
+        };
 
-            console.log(
-                "This browser does not support notifications."
-            );
 
-        }
+        enableNotifications();
 
     }, []);
 
@@ -81,11 +156,16 @@ function Inspector() {
                     window.AudioContext ||
                     window.webkitAudioContext;
 
+
                 if (!AudioContext) {
 
-                    return;
+                    console.log(
+                        "AudioContext not supported."
+                    );
 
+                    return;
                 }
+
 
                 audioContext.current =
                     new AudioContext();
@@ -97,7 +177,9 @@ function Inspector() {
                 audioContext.current;
 
 
-            if (context.state === "suspended") {
+            if (
+                context.state === "suspended"
+            ) {
 
                 context.resume();
 
@@ -118,7 +200,9 @@ function Inspector() {
             );
 
 
-            oscillator.type = "sine";
+            oscillator.type =
+                "sine";
+
 
             oscillator.frequency.setValueAtTime(
                 800,
@@ -146,6 +230,7 @@ function Inspector() {
 
             oscillator.start();
 
+
             oscillator.stop(
                 context.currentTime + 1
             );
@@ -165,10 +250,12 @@ function Inspector() {
 
 
     // ========================================
-    // SHOW WINDOWS / CHROME NOTIFICATION
+    // SHOW BROWSER NOTIFICATION
     // ========================================
 
-    const showBrowserNotification = (order) => {
+    const showBrowserNotification = (
+        order
+    ) => {
 
         if (!("Notification" in window)) {
 
@@ -177,18 +264,19 @@ function Inspector() {
             );
 
             return;
-
         }
 
 
-        if (Notification.permission !== "granted") {
+        if (
+            Notification.permission !==
+            "granted"
+        ) {
 
             console.log(
                 "Browser notification permission is not granted."
             );
 
             return;
-
         }
 
 
@@ -198,6 +286,7 @@ function Inspector() {
                 new Notification(
                     "🔔 RotoTask - New Order",
                     {
+
                         body:
                             `Order ${order.order} is ready for inspection.`,
 
@@ -206,6 +295,7 @@ function Inspector() {
 
                         requireInteraction:
                             true
+
                     }
                 );
 
@@ -216,7 +306,9 @@ function Inspector() {
 
                 notification.close();
 
-                setShowNotification(true);
+                setShowNotification(
+                    true
+                );
 
             };
 
@@ -246,11 +338,18 @@ function Inspector() {
                 await getNotifications();
 
 
+            console.log(
+                "Inspector orders:",
+                data
+            );
+
+
             setOrders(data);
 
             setError("");
 
 
+            // Current order IDs
             const currentIds =
                 new Set(
                     data.map(
@@ -263,15 +362,17 @@ function Inspector() {
             // FIRST PAGE LOAD
             // ====================================
 
-            if (firstLoad.current) {
+            if (
+                firstLoad.current
+            ) {
 
                 previousOrderIds.current =
                     currentIds;
 
-                firstLoad.current = false;
+                firstLoad.current =
+                    false;
 
                 return;
-
             }
 
 
@@ -292,7 +393,9 @@ function Inspector() {
             // NEW ORDER FOUND
             // ====================================
 
-            if (newlyAddedOrders.length > 0) {
+            if (
+                newlyAddedOrders.length > 0
+            ) {
 
                 const latestOrder =
                     newlyAddedOrders[
@@ -306,23 +409,23 @@ function Inspector() {
                 );
 
 
+                // Save new order
                 setNewOrder(
                     latestOrder
                 );
 
 
+                // Show popup
                 setShowNotification(
                     true
                 );
 
 
                 // Play sound
-
                 playNotificationSound();
 
 
-                // Windows / Chrome notification
-
+                // Browser notification
                 showBrowserNotification(
                     latestOrder
                 );
@@ -330,6 +433,7 @@ function Inspector() {
             }
 
 
+            // Update previous IDs
             previousOrderIds.current =
                 currentIds;
 
@@ -358,9 +462,11 @@ function Inspector() {
 
     useEffect(() => {
 
+        // Load immediately
         loadOrders();
 
 
+        // Continue checking every 2 seconds
         const interval =
             setInterval(
                 loadOrders,
@@ -370,7 +476,9 @@ function Inspector() {
 
         return () => {
 
-            clearInterval(interval);
+            clearInterval(
+                interval
+            );
 
         };
 
@@ -381,50 +489,60 @@ function Inspector() {
     // MARK ORDER AS CHECKED
     // ========================================
 
-    const handleChecked = async (id) => {
+    const handleChecked =
+        async (id) => {
 
-        try {
+            try {
 
-            await deleteNotification(id);
-
-
-            setOrders(
-                previousOrders =>
-                    previousOrders.filter(
-                        order =>
-                            order.id !== id
-                    )
-            );
+                await deleteNotification(
+                    id
+                );
 
 
-            if (
-                newOrder &&
-                newOrder.id === id
-            ) {
+                // Remove from screen
+                setOrders(
+                    previousOrders =>
+                        previousOrders.filter(
+                            order =>
+                                order.id !== id
+                        )
+                );
 
-                setNewOrder(null);
 
-                setShowNotification(false);
+                // Close popup if this is
+                // the current order
+                if (
+                    newOrder &&
+                    newOrder.id === id
+                ) {
+
+                    setNewOrder(
+                        null
+                    );
+
+                    setShowNotification(
+                        false
+                    );
+
+                }
 
             }
 
-        }
+            catch (error) {
 
-        catch (error) {
-
-            console.error(
-                "Could not check order:",
-                error
-            );
+                console.error(
+                    "Could not check order:",
+                    error
+                );
 
 
-            alert(
-                "Could not mark order as checked."
-            );
+                alert(
+                    "Could not mark order as checked."
+                );
 
-        }
+            }
 
-    };
+        };
 
 
     // ========================================
@@ -433,7 +551,9 @@ function Inspector() {
 
     const closeNotification = () => {
 
-        setShowNotification(false);
+        setShowNotification(
+            false
+        );
 
     };
 
@@ -444,7 +564,9 @@ function Inspector() {
 
     const openOrder = () => {
 
-        setShowNotification(false);
+        setShowNotification(
+            false
+        );
 
 
         setTimeout(() => {
@@ -469,6 +591,79 @@ function Inspector() {
     };
 
 
+    // ========================================
+    // MANUAL NOTIFICATION TEST
+    // ========================================
+
+    const testNotification = async () => {
+
+        if (!("Notification" in window)) {
+
+            alert(
+                "This browser does not support notifications."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            let permission =
+                Notification.permission;
+
+
+            // Ask if not decided
+            if (
+                permission === "default"
+            ) {
+
+                permission =
+                    await Notification.requestPermission();
+
+            }
+
+
+            if (
+                permission === "granted"
+            ) {
+
+                new Notification(
+                    "🔔 RotoTask Test",
+                    {
+                        body:
+                            "Browser notifications are working!",
+                        tag:
+                            "rototask-test"
+                    }
+                );
+
+            } else {
+
+                alert(
+                    "Browser notifications are blocked. Please allow notifications for this site."
+                );
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Test notification error:",
+                error
+            );
+
+        }
+
+    };
+
+
+    // ========================================
+    // PAGE
+    // ========================================
+
     return (
 
         <div className="inspectorPage">
@@ -481,80 +676,69 @@ function Inspector() {
             {showNotification &&
                 newOrder && (
 
-                <div
-                    className="notificationOverlay"
-                >
-
                     <div
-                        className="notificationPopup"
+                        className="notificationOverlay"
                     >
 
-
                         <div
-                            className="notificationBell"
+                            className="notificationPopup"
                         >
 
-                            🔔
-
-                        </div>
-
-
-                        <h1>
-                            NEW ORDER
-                        </h1>
+                            <div
+                                className="notificationBell"
+                            >
+                                🔔
+                            </div>
 
 
-                        <p>
-
-                            A new order is ready
-                            for inspection.
-
-                        </p>
+                            <h1>
+                                NEW ORDER
+                            </h1>
 
 
-                        <div
-                            className="popupOrder"
-                        >
-
-                            {newOrder.order}
-
-                        </div>
+                            <p>
+                                A new order is ready
+                                for inspection.
+                            </p>
 
 
-                        <div
-                            className="popupButtons"
-                        >
+                            <div
+                                className="popupOrder"
+                            >
+                                {newOrder.order}
+                            </div>
 
 
-                            <button
-                                className="openOrderButton"
-                                onClick={openOrder}
+                            <div
+                                className="popupButtons"
                             >
 
-                                OPEN ORDER
+                                <button
+                                    className="openOrderButton"
+                                    onClick={
+                                        openOrder
+                                    }
+                                >
+                                    OPEN ORDER
+                                </button>
 
-                            </button>
 
+                                <button
+                                    className="dismissButton"
+                                    onClick={
+                                        closeNotification
+                                    }
+                                >
+                                    DISMISS
+                                </button>
 
-                            <button
-                                className="dismissButton"
-                                onClick={
-                                    closeNotification
-                                }
-                            >
-
-                                DISMISS
-
-                            </button>
-
+                            </div>
 
                         </div>
 
                     </div>
 
-                </div>
-
-            )}
+                )}
 
 
             {/* ==================================
@@ -579,10 +763,37 @@ function Inspector() {
 
 
                 <div className="live">
-
                     ● LIVE
-
                 </div>
+
+            </div>
+
+
+            {/* ==================================
+                NOTIFICATION TEST BUTTON
+            ================================== */}
+
+            <div
+                style={{
+                    padding: "10px 20px",
+                    textAlign: "right"
+                }}
+            >
+
+                <button
+                    onClick={
+                        testNotification
+                    }
+                    style={{
+                        padding: "8px 14px",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                        cursor: "pointer",
+                        background: "white"
+                    }}
+                >
+                    🔔 Test Notification
+                </button>
 
             </div>
 
@@ -596,9 +807,12 @@ function Inspector() {
             >
 
 
+                {/* ERROR */}
                 {error && (
 
-                    <div className="errorBox">
+                    <div
+                        className="errorBox"
+                    >
 
                         {error}
 
@@ -607,22 +821,24 @@ function Inspector() {
                 )}
 
 
-                <div className="ordersHeader">
+                {/* ORDERS HEADER */}
 
+                <div
+                    className="ordersHeader"
+                >
 
-                    <h2 className="ordersTitle">
-
+                    <h2
+                        className="ordersTitle"
+                    >
                         🔔 Orders Ready to Check
-
                     </h2>
 
 
-                    <div className="orderCounter">
-
+                    <div
+                        className="orderCounter"
+                    >
                         {orders.length}
-
                     </div>
-
 
                 </div>
 
@@ -634,116 +850,102 @@ function Inspector() {
                 {orders.length === 0 &&
                     !error && (
 
-                    <div className="noOrders">
+                        <div
+                            className="noOrders"
+                        >
+
+                            <div
+                                className="checkIcon"
+                            >
+                                ✓
+                            </div>
 
 
-                        <div className="checkIcon">
+                            <h2>
+                                No orders waiting
+                            </h2>
 
-                            ✓
+
+                            <p>
+                                New orders will appear
+                                automatically.
+                            </p>
 
                         </div>
 
-
-                        <h2>
-
-                            No orders waiting
-
-                        </h2>
-
-
-                        <p>
-
-                            New orders will appear
-                            automatically.
-
-                        </p>
-
-
-                    </div>
-
-                )}
+                    )}
 
 
                 {/* ==================================
                     ORDER LIST
                 ================================== */}
 
-                {orders.map(order => (
-
-                    <div
-                        className="orderCard"
-                        id={`order-${order.id}`}
-                        key={order.id}
-                    >
-
+                {orders.map(
+                    order => (
 
                         <div
-                            className="orderInfo"
+                            className="orderCard"
+                            id={`order-${order.id}`}
+                            key={order.id}
                         >
 
-
                             <div
-                                className="orderLabel"
+                                className="orderInfo"
                             >
 
-                                ORDER
+                                <div
+                                    className="orderLabel"
+                                >
+                                    ORDER
+                                </div>
+
+
+                                <div
+                                    className="orderNumber"
+                                >
+                                    {order.order}
+                                </div>
+
+
+                                <div
+                                    className="orderStatus"
+                                >
+                                    🔔 Ready to Check
+                                </div>
+
+
+                                <div
+                                    className="orderTime"
+                                >
+
+                                    Received:
+
+                                    {" "}
+
+                                    {new Date(
+                                        order.createdAt
+                                    ).toLocaleString()}
+
+                                </div>
 
                             </div>
 
 
-                            <div
-                                className="orderNumber"
+                            <button
+                                className="checkedButton"
+                                onClick={() =>
+                                    handleChecked(
+                                        order.id
+                                    )
+                                }
                             >
-
-                                {order.order}
-
-                            </div>
-
-
-                            <div
-                                className="orderStatus"
-                            >
-
-                                🔔 Ready to Check
-
-                            </div>
-
-
-                            <div
-                                className="orderTime"
-                            >
-
-                                Received:
-
-                                {" "}
-
-                                {new Date(
-                                    order.createdAt
-                                ).toLocaleString()}
-
-                            </div>
-
+                                ✓ CHECKED
+                            </button>
 
                         </div>
 
-
-                        <button
-                            className="checkedButton"
-                            onClick={() =>
-                                handleChecked(
-                                    order.id
-                                )
-                            }
-                        >
-
-                            ✓ CHECKED
-
-                        </button>
-
-
-                    </div>
-
-                ))}
+                    )
+                )}
 
             </div>
 
@@ -755,3 +957,4 @@ function Inspector() {
 
 
 export default Inspector;
+

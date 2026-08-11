@@ -1,5 +1,15 @@
 const API_URL =
-    "https://cautious-lamp-v66r4rjg7vprcp4j5-5000.app.github.dev";
+    import.meta.env.API_URL ||
+    `${window.location.protocol}//${window.location.hostname.replace(
+        "-5173",
+        "-5000"
+    )}`;
+
+console.log("RotoTask API:", API_URL);
+
+// ========================================
+// SEND ORDER NOTIFICATION
+// ========================================
 
 export async function sendOrderNotification(order) {
 
@@ -28,6 +38,10 @@ export async function sendOrderNotification(order) {
 }
 
 
+// ========================================
+// GET NOTIFICATIONS
+// ========================================
+
 export async function getNotifications() {
 
     const response = await fetch(
@@ -43,6 +57,10 @@ export async function getNotifications() {
     return response.json();
 }
 
+
+// ========================================
+// DELETE NOTIFICATION
+// ========================================
 
 export async function deleteNotification(id) {
 
@@ -61,3 +79,4 @@ export async function deleteNotification(id) {
 
     return response.json();
 }
+
