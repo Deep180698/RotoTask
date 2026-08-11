@@ -1,81 +1,40 @@
+
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
 
 const app = express();
 
-const PORT = 5000;
+
+// ========================================
+// CONFIGURATION
+// ========================================
+
+const PORT = process.env.PORT || 5000;
 const HOST = "0.0.0.0";
+
 
 // ========================================
 // MIDDLEWARE
 // ========================================
 
-app.use(cors());
+app.use(
+    cors({
+        origin: "*"
+    })
+);
 
 app.use(express.json());
 
-// ========================================
-// DATA FILE
-// ========================================
-
-const dataDirectory = path.join(__dirname, "data");
-const dataFile = path.join(dataDirectory, "notifications.json");
-
-if (!fs.existsSync(dataDirectory)) {
-    fs.mkdirSync(dataDirectory, { recursive: true });
-}
-
-if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(
-        dataFile,
-        JSON.stringify([], null, 2)
-    );
-}
 
 // ========================================
-// READ NOTIFICATIONS
+// TEMPORARY NOTIFICATION STORAGE
 // ========================================
 
-function readNotifications() {
-    try {
-        const data = fs.readFileSync(
-            dataFile,
-            "utf8"
-        );
+let notifications = [];
 
-        return JSON.parse(data);
-
-    } catch (error) {
-
-        console.error(
-            "Error reading notifications:",
-            error
-        );
-
-        return [];
-    }
-}
 
 // ========================================
-// SAVE NOTIFICATIONS
-// ========================================
-
-function saveNotifications(notifications) {
-
-    fs.writeFileSync(
-        dataFile,
-        JSON.stringify(
-            notifications,
-            null,
-            2
-        )
-    );
-}
-
-// ========================================
-// TEST ROUTE
+// HOME / HEALTH CHECK
 // ========================================
 
 app.get("/", (req, res) => {
@@ -88,80 +47,65 @@ app.get("/", (req, res) => {
 
 });
 
+
 // ========================================
 // GET NOTIFICATIONS
 // ========================================
 
 app.get("/notifications", (req, res) => {
 
-    try {
-
-        const notifications =
-            readNotifications();
-
-        res.json(notifications);
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            error: "Could not load notifications"
-        });
-
-    }
+    res.json(notifications);
 
 });
 
+
 // ========================================
-// SEND ORDER TO INSPECTOR
+// SEND NOTIFICATION
 // ========================================
 
 app.post("/send-notification", (req, res) => {
 
     try {
 
-        const order =
-            req.body.order;
+        const { order } = req.body;
 
-        if (!order || !String(order).trim()) {
+
+        if (!order) {
 
             return res.status(400).json({
-                error: "Order number is required"
+                success: false,
+                message: "Order is required"
             });
 
         }
 
-        const notifications =
-            readNotifications();
 
-        const newNotification = {
+        const notification = {
 
             id:
                 Date.now().toString(),
 
             order:
-                String(order).trim(),
+                order,
 
             createdAt:
                 new Date().toISOString()
 
         };
 
+
         notifications.push(
-            newNotification
+            notification
         );
 
-        saveNotifications(
-            notifications
-        );
 
         console.log(
             "🔔 New order:",
-            newNotification.order
+            notification
         );
 
-        res.status(201).json({
+
+        res.json({
 
             success: true,
 
@@ -169,94 +113,106 @@ app.post("/send-notification", (req, res) => {
                 "Order sent to inspector",
 
             notification:
-                newNotification
+                notification
 
         });
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
             "Send notification error:",
             error
         );
 
+
         res.status(500).json({
-            error: "Could not send notification"
+
+            success: false,
+
+            message:
+                "Server error"
+
         });
 
     }
 
 });
 
+
 // ========================================
-// DELETE / MARK AS CHECKED
+// DELETE NOTIFICATION
 // ========================================
 
 app.delete(
     "/notifications/:id",
     (req, res) => {
 
-        try {
+        const { id } =
+            req.params;
 
-            const id =
-                String(req.params.id);
 
-            const notifications =
-                readNotifications();
+        const before =
+            notifications.length;
 
-            const originalLength =
-                notifications.length;
 
-            const remaining =
-                notifications.filter(
-                    notification =>
-                        String(notification.id) !== id
-                );
-
-            if (
-                remaining.length ===
-                originalLength
-            ) {
-
-                return res.status(404).json({
-                    error: "Notification not found"
-                });
-
-            }
-
-            saveNotifications(
-                remaining
+        notifications =
+            notifications.filter(
+                notification =>
+                    notification.id !== id
             );
 
-            console.log(
-                "✅ Order checked:",
-                id
-            );
 
-            res.json({
+        if (
+            notifications.length === before
+        ) {
 
-                success: true,
+            return res.status(404).json({
+
+                success: false,
 
                 message:
-                    "Order marked as checked"
+                    "Notification not found"
 
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Delete notification error:",
-                error
-            );
-
-            res.status(500).json({
-                error: "Could not delete notification"
             });
 
         }
 
+
+        res.json({
+
+            success: true,
+
+            message:
+                "Notification deleted"
+
+        });
+
     }
 );
+
+
+// ========================================
+// 404 HANDLER
+// ========================================
+
+app.use((req, res) => {
+
+    res.status(404).json({
+
+        success: false,
+
+        message:
+            "Route not found",
+
+        path:
+            req.originalUrl
+
+    });
+
+});
+
 
 // ========================================
 // START SERVER
@@ -267,29 +223,10 @@ app.listen(
     HOST,
     () => {
 
-        console.log("");
         console.log(
-            "========================================"
+            `🚀 RotoTask Backend Running on ${HOST}:${PORT}`
         );
-        console.log(
-            "🚀 RotoTask Backend Running"
-        );
-        console.log(
-            "========================================"
-        );
-        console.log(
-            `Port: ${PORT}`
-        );
-        console.log(
-            `Host: ${HOST}`
-        );
-        console.log(
-            "Network access enabled"
-        );
-        console.log(
-            "========================================"
-        );
-        console.log("");
 
     }
 );
+
